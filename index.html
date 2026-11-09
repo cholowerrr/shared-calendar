@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Our Shared Calendar</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--ink:#1b2130;--muted:#677085;--line:#e3e6ec;--accent:#2563eb}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+header{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--card);border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0}
+.me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+.me select{padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff}
+main{max-width:1200px;margin:0 auto;padding:16px 20px 40px;display:grid;grid-template-columns:1fr 330px;gap:16px;align-items:start}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px}
+.toolbar{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.toolbar h2{margin:0 auto 0 4px;font-size:17px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover{background:#f0f2f6}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:#1d4fd0}
+.btn.danger{color:#b42318;border-color:#f3c5c0}
+.filters{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line);align-items:center}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px;font-size:13px;cursor:pointer;color:var(--muted)}
+.pill i{width:10px;height:10px;border-radius:50%;background:var(--c);opacity:.35}
+.pill.on{color:var(--ink);border-color:var(--c)}
+.pill.on i{opacity:1}
+.linkbtn{background:none;border:0;color:var(--accent);cursor:pointer;font-size:13px;padding:4px}
+.dow,.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.dow div{padding:8px 0;text-align:center;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)}
+.day{border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff;min-height:104px;padding:6px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;align-items:stretch;overflow:hidden}
+.day:nth-child(7n){border-right:0}
+.day:hover{background:#f8f9fc}
+.day.out{background:#fafbfc;color:#a3aabb}
+.day.sel{outline:2px solid var(--accent);outline-offset:-2px}
+.num{font-size:13px;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%}
+.day.today .num{background:var(--accent);color:#fff}
+.chips{display:flex;flex-direction:column;gap:2px;min-width:0}
+.chip{display:block;font-size:11.5px;line-height:1.4;padding:1px 6px;border-radius:5px;color:#fff;background:var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.more{font-size:11px;color:var(--muted);padding-left:4px}
+aside .head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px;border-bottom:1px solid var(--line)}
+aside h3{margin:0;font-size:16px}
+.list{padding:10px;display:flex;flex-direction:column;gap:8px}
+.ev{display:block;width:100%;text-align:left;border:1px solid var(--line);border-left:5px solid var(--c);background:#fff;border-radius:8px;padding:8px 10px;cursor:pointer}
+.ev:hover{background:#f8f9fc}
+.evtime{font-size:12px;color:var(--muted)}
+.evmain{font-size:14px;margin-top:2px}
+.evnote{font-size:12.5px;color:var(--muted);margin-top:3px;white-space:pre-wrap}
+.badge{font-size:11px;background:#eef2ff;color:#3b4fb8;border-radius:999px;padding:1px 7px;margin-left:6px}
+.empty{color:var(--muted);font-size:14px;padding:6px 4px}
+.free{padding:10px 14px 14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.free b{color:var(--ink)}
+#status{font-size:12px;color:var(--muted)}
+#status.err{color:#b42318}
+dialog{border:0;border-radius:14px;padding:0;width:min(440px,94vw);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(20,24,35,.45)}
+form{padding:18px;display:grid;gap:12px}
+form h3{margin:0 0 2px}
+label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+label.inline{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:14px}
+input[type=text],input[type=date],input[type=time],input[type=password],select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+textarea{resize:vertical;min-height:60px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+.actions .spacer{margin-right:auto}
+.formerr{color:#b42318;font-size:13px;min-height:16px}
+@media (max-width:860px){
+  main{grid-template-columns:1fr;padding:12px}
+  .day{min-height:62px;padding:4px}
+  .chips{flex-direction:row;flex-wrap:wrap;gap:3px}
+  .chip{width:8px;height:8px;padding:0;font-size:0;border-radius:50%}
+  .more{font-size:10px;padding:0}
+  header{padding:12px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>📅 Our Shared Calendar</h1>
+  <div class="me">
+    <span id="status">Loading…</span>
+    <label class="inline" style="color:var(--muted)">I am
+      <select id="me"></select>
+    </label>
+  </div>
+</header>
+
+<main>
+  <section class="panel">
+    <div class="toolbar">
+      <button class="btn" id="prev" aria-label="Previous month">‹</button>
+      <button class="btn" id="next" aria-label="Next month">›</button>
+      <h2 id="monthLabel"></h2>
+      <button class="btn" id="todayBtn">Today</button>
+      <button class="btn primary" id="addBtn">+ Add schedule</button>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="dow"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <aside class="panel" id="dayPanel">
+    <div class="head">
+      <h3 id="dayTitle"></h3>
+      <button class="btn primary" id="addDayBtn">+ Add</button>
+    </div>
+    <div class="list" id="dayList"></div>
+    <div class="free" id="dayFree"></div>
+  </aside>
+</main>
+
+<dialog id="formDlg">
+  <form id="form" method="dialog">
+    <h3 id="formTitle">Add schedule</h3>
+    <label>Who
+      <select id="f_who" required></select>
+    </label>
+    <label>Title
+      <input type="text" id="f_title" maxlength="80" placeholder="e.g. Class, Duty, Work, Busy" required>
+    </label>
+    <label>Date
+      <input type="date" id="f_date" required>
+    </label>
+    <label class="inline"><input type="checkbox" id="f_allday"> All day</label>
+    <div class="row" id="timeRow">
+      <label>Start <input type="time" id="f_start" value="09:00"></label>
+      <label>End <input type="time" id="f_end" value="10:00"></label>
+    </div>
+    <label class="inline"><input type="checkbox" id="f_repeat"> Repeats every week (same weekday)</label>
+    <label id="untilRow" hidden>Repeat until (optional)
+      <input type="date" id="f_until">
+    </label>
+    <label>Note (optional)
+      <textarea id="f_note" maxlength="300"></textarea>
+    </label>
+    <div class="formerr" id="formErr"></div>
+    <div class="actions">
+      <button type="button" class="btn danger spacer" id="delBtn" hidden>Delete</button>
+      <button type="button" class="btn" id="cancelBtn">Cancel</button>
+      <button type="submit" class="btn primary" id="saveBtn">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="gate">
+  <form id="gateForm" method="dialog">
+    <h3>Enter access code</h3>
+    <label>Ask the group admin for the code
+      <input type="password" id="gateInput" autocomplete="off" required>
+    </label>
+    <div class="formerr" id="gateErr"></div>
+    <div class="actions"><button type="submit" class="btn primary">Enter</button></div>
+  </form>
+</dialog>
+
+<script>
+// ====== EDIT THIS LIST to add/remove people or change colors ======
+const MEMBERS = [
+  { name: "Michael", color: "#2563eb" },
+  { name: "Daphne",  color: "#db2777" },
+  { name: "Trixie",  color: "#ea580c" },
+  { name: "Trisha",  color: "#16a34a" },
+  { name: "Abigail", color: "#7c3aed" },
+  { name: "Aaron",   color: "#0891b2" },
+  { name: "Nicole",  color: "#b45309" },
+  { name: "Naomi",   color: "#dc2626" },
+  { name: "Micai",   color: "#0d9488" },
+  { name: "Rovi",    color: "#c026d3" },
+  { name: "Kyla",    color: "#65a30d" },
+  { name: "Arjen",   color: "#475569" },
+];
+// ==================================================================
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pad = n => String(n).padStart(2, "0");
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const colorOf = name => (MEMBERS.find(m => m.name === name) || {}).color || "#64748b";
+function fmtTime(t) { const [h, m] = t.split(":").map(Number); return `${h % 12 || 12}:${pad(m)} ${h < 12 ? "AM" : "PM"}`; }
+function storeGet(k) { try { return localStorage.getItem(k) || ""; } catch { return ""; } }
+function storeSet(k, v) { try { localStorage.setItem(k, v); } catch { /* ignore */ } }
+
+let events = [];
+let code = storeGet("cal-code");
+let me = storeGet("cal-me");
+let active = new Set(MEMBERS.map(m => m.name));
+const now = new Date();
+let viewYear = now.getFullYear(), viewMonth = now.getMonth();
+let selected = ymd(now);
+let editingId = null;
+
+// ---------- API ----------
+async function api(method, path, body) {
+  const r = await fetch(path, {
+    method,
+    headers: { "Content-Type": "application/json", "x-access-code": code },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (r.status === 401) { askCode(); throw new Error("auth"); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || `Error ${r.status}`);
+  return j;
+}
+function setStatus(msg, isErr) { const s = $("#status"); s.textContent = msg; s.className = isErr ? "err" : ""; }
+async function load() {
+  try {
+    const j = await api("GET", "/api/events");
+    events = j.events || [];
+    const t = new Date();
+    setStatus(`Synced ${fmtTime(`${pad(t.getHours())}:${pad(t.getMinutes())}`)}`);
+    render();
+  } catch (e) {
+    if (e.message !== "auth") setStatus(e.message, true);
+  }
+}
+function askCode() {
+  const g = $("#gate");
+  if (!g.open) g.showModal();
+}
+$("#gateForm").addEventListener("submit", () => {
+  code = $("#gateInput").value.trim();
+  storeSet("cal-code", code);
+  $("#gate").close();
+  load();
+});
+
+// ---------- schedule logic ----------
+function matches(e, ds) {
+  if (e.repeat === "weekly") {
+    return ds >= e.date && (!e.until || ds <= e.until) && parse(ds).getDay() === parse(e.date).getDay();
+  }
+  return e.date === ds;
+}
+function eventsOn(ds, useFilter = true) {
+  return events
+    .filter(e => matches(e, ds) && (!useFilter || active.has(e.who)))
+    .sort((a, b) => (a.allDay === b.allDay ? (a.start || "").localeCompare(b.start || "") || a.who.localeCompare(b.who) : a.allDay ? -1 : 1));
+}
+
+// ---------- render ----------
+function renderFilters() {
+  $("#filters").innerHTML =
+    MEMBERS.map(m => `<button type="button" class="pill ${active.has(m.name) ? "on" : ""}" data-name="${esc(m.name)}" style="--c:${m.color}"><i></i>${esc(m.name)}</button>`).join("") +
+    `<button type="button" class="linkbtn" data-act="all">All</button><button type="button" class="linkbtn" data-act="me">Only me</button>`;
+}
+function chipHtml(e) {
+  const label = `${e.who} · ${e.title}`;
+  return `<span class="chip" style="--c:${colorOf(e.who)}" title="${esc(label)}">${esc(label)}</span>`;
+}
+function renderMonth() {
+  $("#monthLabel").textContent = new Date(viewYear, viewMonth, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const lead = new Date(viewYear, viewMonth, 1).getDay();
+  const dim = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const weeks = Math.ceil((lead + dim) / 7);
+  const today = ymd(new Date());
+  let html = "";
+  for (let i = 0; i < weeks * 7; i++) {
+    const d = new Date(viewYear, viewMonth, 1 - lead + i);
+    const ds = ymd(d);
+    const evs = eventsOn(ds);
+    html += `<button type="button" class="day ${d.getMonth() !== viewMonth ? "out" : ""} ${ds === today ? "today" : ""} ${ds === selected ? "sel" : ""}" data-date="${ds}">` +
+      `<span class="num">${d.getDate()}</span><span class="chips">` +
+      evs.slice(0, 3).map(chipHtml).join("") +
+      (evs.length > 3 ? `<span class="more">+${evs.length - 3}</span>` : "") +
+      `</span></button>`;
+  }
+  $("#grid").innerHTML = html;
+}
+function renderDay() {
+  $("#dayTitle").textContent = parse(selected).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  const list = eventsOn(selected);
+  $("#dayList").innerHTML = list.length
+    ? list.map(e => `<button type="button" class="ev" data-id="${esc(e.id)}" style="--c:${colorOf(e.who)}">` +
+        `<div class="evtime">${e.allDay ? "All day" : `${fmtTime(e.start)} – ${fmtTime(e.end)}`}${e.repeat === "weekly" ? `<span class="badge">Weekly</span>` : ""}</div>` +
+        `<div class="evmain"><b>${esc(e.who)}</b> · ${esc(e.title)}</div>` +
+        (e.note ? `<div class="evnote">${esc(e.note)}</div>` : "") + `</button>`).join("")
+    : `<div class="empty">Nothing scheduled${active.size < MEMBERS.length ? " (for the selected people)" : ""}.</div>`;
+  const busy = new Set(eventsOn(selected, false).map(e => e.who));
+  const free = MEMBERS.filter(m => !busy.has(m.name)).map(m => m.name);
+  $("#dayFree").innerHTML = free.length === MEMBERS.length
+    ? `<b>Everyone</b> has no schedule this day.`
+    : free.length ? `No schedule this day: <b>${esc(free.join(", "))}</b>` : `Everyone has something on this day.`;
+}
+function render() { renderFilters(); renderMonth(); renderDay(); }
+
+// ---------- events from UI ----------
+$("#prev").onclick = () => { viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; } renderMonth(); };
+$("#next").onclick = () => { viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; } renderMonth(); };
+$("#todayBtn").onclick = () => { const d = new Date(); viewYear = d.getFullYear(); viewMonth = d.getMonth(); selected = ymd(d); render(); };
+$("#grid").addEventListener("click", ev => {
+  const b = ev.target.closest(".day"); if (!b) return;
+  selected = b.dataset.date;
+  const d = parse(selected);
+  viewYear = d.getFullYear(); viewMonth = d.getMonth();
+  render();
+  if (window.matchMedia("(max-width:860px)").matches) $("#dayPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+$("#filters").addEventListener("click", ev => {
+  const pill = ev.target.closest(".pill");
+  const act = ev.target.dataset.act;
+  if (pill) { const n = pill.dataset.name; active.has(n) ? active.delete(n) : active.add(n); }
+  else if (act === "all") active = new Set(MEMBERS.map(m => m.name));
+  else if (act === "me") { if (!me) { alert("Pick your name at the top right first."); return; } active = new Set([me]); }
+  else return;
+  render();
+});
+$("#dayList").addEventListener("click", ev => { const b = ev.target.closest(".ev"); if (b) openForm(b.dataset.id); });
+$("#addBtn").onclick = $("#addDayBtn").onclick = () => openForm(null);
+
+// identity picker
+$("#me").innerHTML = `<option value="">— pick your name —</option>` + MEMBERS.map(m => `<option>${esc(m.name)}</option>`).join("");
+$("#me").value = MEMBERS.some(m => m.name === me) ? me : "";
+if (!$("#me").value) me = "";
+$("#me").onchange = e => { me = e.target.value; storeSet("cal-me", me); };
+$("#f_who").innerHTML = MEMBERS.map(m => `<option>${esc(m.name)}</option>`).join("");
+
+// ---------- form ----------
+function syncFormUI() {
+  $("#timeRow").hidden = $("#f_allday").checked;
+  $("#untilRow").hidden = !$("#f_repeat").checked;
+}
+$("#f_allday").onchange = $("#f_repeat").onchange = syncFormUI;
+function openForm(id) {
+  editingId = id;
+  const e = id ? events.find(x => x.id === id) : null;
+  $("#formTitle").textContent = e ? "Edit schedule" : "Add schedule";
+  $("#f_who").value = e ? e.who : (me || MEMBERS[0].name);
+  $("#f_title").value = e ? e.title : "";
+  $("#f_date").value = e ? e.date : selected;
+  $("#f_allday").checked = e ? e.allDay : false;
+  $("#f_start").value = e && e.start ? e.start : "09:00";
+  $("#f_end").value = e && e.end ? e.end : "10:00";
+  $("#f_repeat").checked = e ? e.repeat === "weekly" : false;
+  $("#f_until").value = e ? e.until || "" : "";
+  $("#f_note").value = e ? e.note || "" : "";
+  $("#delBtn").hidden = !e;
+  $("#formErr").textContent = "";
+  syncFormUI();
+  $("#formDlg").showModal();
+}
+$("#cancelBtn").onclick = () => $("#formDlg").close();
+$("#form").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const body = {
+    id: editingId || undefined,
+    who: $("#f_who").value,
+    title: $("#f_title").value.trim(),
+    date: $("#f_date").value,
+    allDay: $("#f_allday").checked,
+    start: $("#f_start").value,
+    end: $("#f_end").value,
+    repeat: $("#f_repeat").checked ? "weekly" : "none",
+    until: $("#f_repeat").checked ? $("#f_until").value : "",
+    note: $("#f_note").value.trim(),
+  };
+  const btn = $("#saveBtn"); btn.disabled = true;
+  try {
+    const { event } = await api("POST", "/api/events", body);
+    events = events.filter(x => x.id !== event.id).concat(event);
+    selected = event.date;
+    const d = parse(selected); viewYear = d.getFullYear(); viewMonth = d.getMonth();
+    $("#formDlg").close();
+    render();
+  } catch (e) {
+    if (e.message !== "auth") $("#formErr").textContent = e.message;
+  } finally { btn.disabled = false; }
+});
+$("#delBtn").onclick = async () => {
+  if (!editingId || !confirm("Delete this schedule?")) return;
+  try {
+    await api("DELETE", `/api/events?id=${encodeURIComponent(editingId)}`);
+    events = events.filter(x => x.id !== editingId);
+    $("#formDlg").close();
+    render();
+  } catch (e) { if (e.message !== "auth") $("#formErr").textContent = e.message; }
+};
+
+// ---------- go ----------
+render();
+load();
+setInterval(load, 20000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
+</script>
+</body>
+</html>
